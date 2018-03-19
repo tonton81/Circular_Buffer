@@ -22,17 +22,16 @@ class Circular_Buffer {
         void flush() { return head = tail = _available = 0; }
         void print(const char *p);
         void println(const char *p);
-        uint16_t size() { return available(); }
+        uint16_t size() { return _available; }
         uint16_t available() { return _available; }
         T* front() { return _cabuf[peek()]; }
         T* back() { return _cabuf[(tail-1)&(_size-1)]; }
 
     protected:
     private:
-        uint16_t head = 0, tail = 0, _available = 0;
+        uint16_t head = 0, tail = 0, _available = 0, _array_pointer = 0;
         T _cbuf[_size];
         T _cabuf[_size][multi];
-        uint16_t _array_pointer = 0;
 };
 
 template<typename T, uint16_t _size, uint16_t multi>
@@ -108,9 +107,9 @@ void Circular_Buffer<T,_size,multi>::write(const T *buffer, uint16_t length) {
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::read() {
+  _available--;
   T value = _cbuf[head&(_size-1)];
   head = (head + 1)&(2*_size-1);
-  _available--;
   return value;
 }
 
@@ -124,7 +123,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
   if ( multi ) return 0;
   uint16_t _count;
-  ( available() < length ) ? _count = available() : _count = length;
+  ( _available < length ) ? _count = _available : _count = length;
   if ( _count < ( _size - head ) ) memmove(buffer,_cbuf,_count*sizeof(T));
   else for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = peek(i);
   return _count;
@@ -132,10 +131,14 @@ T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
-  if ( multi ) return 0;
+  if ( multi ) {
+    memmove(&buffer[0],&_cabuf[peek()],length*sizeof(T)); // update buffer
+    read(); // deque item
+    return 0;
+  }
   _available -= length;
   uint16_t _count;
-  ( available() < length ) ? _count = available() : _count = length;
+  ( _available < length ) ? _count = _available : _count = length;
   if ( _count < ( _size - head ) ) {
     memmove(buffer,_cbuf,_count*sizeof(T));
     head = (head + _count)&(2*_size-1);
