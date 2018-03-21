@@ -233,7 +233,7 @@ T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
     return 0;
   }
   uint16_t _count;
-  ( _available <= length ) ? _count = _available : _count = length; // memmove if aligned
+  ( _available < length ) ? _count = _available : _count = length; // memmove if aligned
   if ( _count < ( _size - head ) ) {
     _available -= length;
     memmove(buffer,_cbuf,_count*sizeof(T));
