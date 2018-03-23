@@ -156,9 +156,12 @@ void Circular_Buffer<T,_size,multi>::push_front(const T *buffer, uint16_t length
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::pop_back() {
-  _available--;
-  tail = (tail - 1)&(2*_size-1);
-  return _cbuf[tail&(_size-1)];
+  if ( _available ) {
+    _available--;
+    tail = (tail - 1)&(2*_size-1);
+    return _cbuf[tail&(_size-1)];
+  }
+  return -1;
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
