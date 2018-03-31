@@ -83,12 +83,11 @@ class Circular_Buffer {
 
 template<typename T, uint16_t _size, uint16_t multi>
 bool Circular_Buffer<T, _size, multi>::replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4, int pos5) {
-  uint8_t input_count = 3, queue_position = 0;
+  uint8_t input_count = 3;
   bool found = 0;
   if ( pos4 != -1 ) input_count = 4;
   if ( pos5 != -1 ) input_count = 5;
   for ( uint16_t j = 0; j < _available; j++ ) {
-    queue_position = j;
     switch ( input_count ) {
       case 3: {
           if ( _cabuf[j][pos1+2] == buffer[pos1] && _cabuf[j][pos2+2] == buffer[pos2] &&
