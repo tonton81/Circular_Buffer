@@ -249,7 +249,7 @@ T Circular_Buffer<T,_size,multi>::read() {
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::average() {
-  if ( multi ) return 0;
+  if ( multi || !_available ) return 0;
   T value = 0;
   for ( uint16_t i = 0; i < _available; i++ ) value += _cbuf[(head+i)&(_size-1)];
   value /= _available;
