@@ -35,6 +35,7 @@
 
 #ifndef CIRCULAR_BUFFER_H
 #define CIRCULAR_BUFFER_H
+#include <algorithm>
 
 template<typename T, uint16_t _size, uint16_t multi = 0>
 class Circular_Buffer {
@@ -67,6 +68,10 @@ class Circular_Buffer {
         T variance();
         T deviation();
         T average();
+        T median();
+        void sort_ascending();
+        void sort_descending();
+        T sum();
         T min();
         T max();
         T mean() { return average(); }
@@ -253,12 +258,17 @@ T Circular_Buffer<T,_size,multi>::read() {
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
-T Circular_Buffer<T,_size,multi>::average() {
+T Circular_Buffer<T,_size,multi>::sum() {
   if ( multi || !_available ) return 0;
   T value = 0;
   for ( uint16_t i = 0; i < _available; i++ ) value += _cbuf[(head+i)&(_size-1)];
-  value /= _available;
   return value;
+}
+
+template<typename T, uint16_t _size, uint16_t multi>
+T Circular_Buffer<T,_size,multi>::average() {
+  if ( multi || !_available ) return 0;
+  return sum()/_available;
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
@@ -286,6 +296,35 @@ T Circular_Buffer<T,_size,multi>::peek(uint16_t pos) {
   return _cbuf[(head+pos)&(_size-1)];
 }
 
+template<typename T, uint16_t _size, uint16_t multi>
+void Circular_Buffer<T,_size,multi>::sort_ascending() {
+  if ( multi || !_available ) return;
+  T buffer[_available];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  std::sort(&buffer[0], &buffer[_available]); // sort ascending
+  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[(head+i)&(_size-1)] = buffer[i];
+}
+
+template<typename T, uint16_t _size, uint16_t multi>
+void Circular_Buffer<T,_size,multi>::sort_descending() {
+  if ( multi || !_available ) return;
+  sort_ascending();
+  T buffer[_available];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  std::reverse(&buffer[0], &buffer[_available]); // sort descending
+  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[(head+i)&(_size-1)] = buffer[i];
+}
+
+template<typename T, uint16_t _size, uint16_t multi>
+T Circular_Buffer<T,_size,multi>::median() {
+  if ( multi || !_available ) return 0;
+  sort_ascending();
+  if ( !(_available % 2) ) {
+    return ( _cbuf[(head+((_available/2)-1))&(_size-1)]  +  _cbuf[(head+(_available/2))&(_size-1)] ) /2;
+  }
+  else return _cbuf[(head+((_available/2)))&(_size-1)];  
+  return 0;
+}
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::max() {
@@ -305,8 +344,6 @@ T Circular_Buffer<T,_size,multi>::min() {
   }
   return _find;
 }
-
-
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
