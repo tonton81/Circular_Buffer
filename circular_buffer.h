@@ -67,6 +67,8 @@ class Circular_Buffer {
         T variance();
         T deviation();
         T average();
+        T min();
+        T max();
         T mean() { return average(); }
         T max_size() { return multi; }
         T pop_back(T *buffer, uint16_t length);
@@ -258,6 +260,7 @@ T Circular_Buffer<T,_size,multi>::average() {
   value /= _available;
   return value;
 }
+
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::variance() {
   if ( multi || !_available ) return 0;
@@ -270,14 +273,11 @@ T Circular_Buffer<T,_size,multi>::variance() {
   return value;
 }
 
-
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::deviation() {
   if ( multi || !_available ) return 0;
   return sqrt(variance());
 }
-
-
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peek(uint16_t pos) {
@@ -285,6 +285,28 @@ T Circular_Buffer<T,_size,multi>::peek(uint16_t pos) {
   if ( pos > _size ) return 0;
   return _cbuf[(head+pos)&(_size-1)];
 }
+
+
+template<typename T, uint16_t _size, uint16_t multi>
+T Circular_Buffer<T,_size,multi>::max() {
+  if ( multi || !_available ) return 0;
+  T _find = 0;
+  for ( uint16_t i = 0; i < _available; i++ ) {
+    if ( _cbuf[(head+i)&(_size-1)] > _find ) _find = _cbuf[(head+i)&(_size-1)];
+  }
+  return _find;
+}
+template<typename T, uint16_t _size, uint16_t multi>
+T Circular_Buffer<T,_size,multi>::min() {
+  if ( multi || !_available ) return 0;
+  T _find = 0;
+  for ( uint16_t i = 0; i < _available; i++ ) {
+    if ( !_find || _cbuf[(head+i)&(_size-1)] < _find ) _find = _cbuf[(head+i)&(_size-1)];
+  }
+  return _find;
+}
+
+
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
