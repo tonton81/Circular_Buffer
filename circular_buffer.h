@@ -68,7 +68,7 @@ class Circular_Buffer {
         T variance();
         T deviation();
         T average();
-        T median();
+        T median(bool override = 0);
         void sort_ascending();
         void sort_descending();
         T sum();
@@ -316,9 +316,14 @@ void Circular_Buffer<T,_size,multi>::sort_descending() {
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
-T Circular_Buffer<T,_size,multi>::median() {
+T Circular_Buffer<T,_size,multi>::median(bool override) {
   if ( multi || !_available ) return 0;
-  sort_ascending();
+  if ( override ) sort_ascending();
+  else {
+    T buffer[_available];
+    for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+    std::sort(&buffer[0], &buffer[_available]); // sort ascending
+  }
   if ( !(_available % 2) ) {
     return ( _cbuf[(head+((_available/2)-1))&(_size-1)]  +  _cbuf[(head+(_available/2))&(_size-1)] ) /2;
   }
