@@ -168,7 +168,7 @@ Circular_Buffer<float, 8, 200> myBuffer; // creates a circular array system with
 Circular_Buffer<uint16_t, 4, 100> myBuffer; // creates a circular array system with 4 queue slots of arrays capable of storing 100 16bit entries
 
 Circular_Buffer<uint16_t_t, 4> myBuffer; // creates a ring buffer holding 16bit x 4 entries max
-Circular_Buffer<float, 32> myBuffer; // creates a ring buffer holding 16bit x 32 entries max
+Circular_Buffer<float, 32> myBuffer; // creates a ring buffer holding floats x 32 entries max
 Circular_Buffer<uint32_t, 64> myBuffer; // creates a ring buffer holding 32bit x 64 entries max
 ```
 
