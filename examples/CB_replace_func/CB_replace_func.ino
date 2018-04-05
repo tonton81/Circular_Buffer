@@ -19,7 +19,7 @@ Circular_Buffer<uint8_t, 64, 10> k;
 
 void setup() {
   Serial.begin(115200);
-  delay(3000);  //not necessay but added to give user time to
+  delay(3000);  //not necessary but added to give user time to
                 //open serial monitor.
   Serial.println("----------------------");
   Serial.print("Initial Q Size: "); 
