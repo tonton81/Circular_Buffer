@@ -62,8 +62,8 @@ class Circular_Buffer {
         uint16_t size() { return _available; }
         uint16_t available() { return _available; }
         T capacity() { return _size; }
-        T length_back() { return ((T)(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+size()-1)&(_size-1)]][1]); }
-        T length_front() { return ((T)(_cabuf[_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head)&(_size-1)]][1]); }
+        uint16_t length_back() { return ((uint16_t)(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+size()-1)&(_size-1)]][1]); }
+        uint16_t length_front() { return ((uint16_t)_cabuf[_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T) | _cabuf[_cbuf[(head)&(_size-1)]][1]); }
         T list();
         T variance();
         T deviation();
