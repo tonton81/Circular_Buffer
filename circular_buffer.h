@@ -334,20 +334,18 @@ T Circular_Buffer<T,_size,multi>::median(bool override) {
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::max() {
   if ( multi || !_available ) return 0;
-  T _find = 0;
-  for ( uint16_t i = 0; i < _available; i++ ) {
-    if ( _cbuf[(head+i)&(_size-1)] > _find ) _find = _cbuf[(head+i)&(_size-1)];
-  }
-  return _find;
+  T buffer[_available];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  std::sort(&buffer[0], &buffer[_available]); // sort ascending
+  return buffer[_available-1];
 }
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::min() {
   if ( multi || !_available ) return 0;
-  T _find = 0;
-  for ( uint16_t i = 0; i < _available; i++ ) {
-    if ( !_find || _cbuf[(head+i)&(_size-1)] < _find ) _find = _cbuf[(head+i)&(_size-1)];
-  }
-  return _find;
+  T buffer[_available];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  std::sort(&buffer[0], &buffer[_available]); // sort ascending
+  return buffer[0];
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
