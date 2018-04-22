@@ -82,6 +82,7 @@ class Circular_Buffer {
         T* front() { return _cabuf[_cbuf[(head)&(_size-1)]]+2; }
         T* back() { return _cabuf[(tail-1)&(_size-1)]+2; }
         bool replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
+        T* find(int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
 
     protected:
     private:
@@ -91,6 +92,11 @@ class Circular_Buffer {
         T _cabuf[_size][multi+2];
         void _init();
 };
+
+template<typename T, uint16_t _size, uint16_t multi>
+T* Circular_Buffer<T, _size, multi>::find(int pos1, int pos2, int pos3, int pos4, int pos5) {
+}
+
 
 template<typename T, uint16_t _size, uint16_t multi>
 bool Circular_Buffer<T, _size, multi>::replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4, int pos5) {
@@ -185,13 +191,14 @@ void Circular_Buffer<T,_size,multi>::push_front(T value) {
   _cbuf[head&(_size-1)] = value;
   if ( _available < _size ) _available++;
 }
+
 template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::write(const T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    _cabuf[_cbuf[tail&(_size-1)]][0] = length >> 8*sizeof(T);
-    _cabuf[_cbuf[tail&(_size-1)]][1] = length;
-    memmove(_cabuf[_cbuf[tail&(_size-1)]]+2,buffer,length*sizeof(T));
+    _cabuf[(int)_cbuf[tail&(_size-1)]][0] = length >> 8*sizeof(T);
+    _cabuf[(int)_cbuf[tail&(_size-1)]][1] = length;
+    memmove(_cabuf[(int)_cbuf[tail&(_size-1)]]+2,buffer,length*sizeof(T));
     if ( tail == (head ^ _size) ) head = (head + 1)&(2*_size-1);
     tail = (tail + 1)&(2*_size-1);
     if ( _available < _size ) _available++;
@@ -218,35 +225,81 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::list() {
   if ( multi ) {
     if ( init_ca ) _init();
-    Serial.print("Queue Size: "); Serial.print(size()); Serial.print(", Index order: ");
+    if ( !size() ) {
+      Serial.println("There are no queues available..."); return 0;
+    }
+
+    Serial.print("\nCircular Array Buffer Queue Size: "); Serial.print(size()); Serial.print(" / "); Serial.println(_size);
+
+    Serial.print("\nFirst Entry: ");
+    for ( uint16_t i = 2; i <= (((int)_cabuf[(int)_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head)&(_size-1)]][1])+1; i++ ) {
+      if ( (int)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][i]) != (T)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][i]) ) { // possible float?
+        Serial.print(_cabuf[(int)_cbuf[(head)&(_size-1)]][i],7);
+      }
+      else Serial.print(_cabuf[(int)_cbuf[(head)&(_size-1)]][i]);
+      Serial.print("    ");
+    } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head)&(_size-1)]][1])); Serial.println(" entries.)");
+
+    Serial.print("Last Entry:  ");
+    for ( uint16_t i = 2; i <= ((int)((int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][1])+1; i++ ) {
+      if ( (int)(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]) != (T)(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]) ) { // possible float?
+        Serial.print(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i],7);
+      }
+      else Serial.print(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]);
+      Serial.print("    ");
+    } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][1])); Serial.println(" entries.)");
+
+    Serial.print("\n[Indice]      [Entries]\n\n"); 
     for ( uint16_t i = 0; i < size(); i++ ) {
-      Serial.print(_cbuf[(head+i)&(_size-1)]); Serial.print(" ");
-    } Serial.println();
-    Serial.print("First Entry: ");
-    for ( uint16_t i = 2; i <= ((T)(_cabuf[_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head)&(_size-1)]][1])+1; i++ ) {
-      Serial.print(_cabuf[_cbuf[(head)&(_size-1)]][i]); Serial.print(" ");
-    } Serial.print("("); Serial.print(((T)(_cabuf[_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head)&(_size-1)]][1])); Serial.println(" entries.)");
-    Serial.print("Last Entry: ");
-    for ( uint16_t i = 2; i <= ((T)(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+size()-1)&(_size-1)]][1])+1; i++ ) {
-      Serial.print(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][i]); Serial.print(" ");
-    } Serial.print("("); Serial.print(((T)(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+size()-1)&(_size-1)]][1])); Serial.println(" entries.)");
-    Serial.println();
-    Serial.println("Queue list: ");
-    for ( uint16_t i = 0; i < _available; i++ ) {
-      Serial.print(i); Serial.print(") ");
-      for ( uint16_t j = 2; j <= ((T)(_cabuf[_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+i)&(_size-1)]][1])+1; j++ ) {
-        Serial.print(_cabuf[_cbuf[(head+i)&(_size-1)]][j]); Serial.print(" ");
-      } Serial.print("("); Serial.print(((T)(_cabuf[_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+i)&(_size-1)]][1])); Serial.println(" entries.)");
-    } Serial.println();
+      Serial.print("    ");
+      Serial.print((head+i)&(_size-1));
+      Serial.print("\t\t");
+      for ( uint16_t j = 2; j <= ((int)((int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][1])+1; j++ ) {
+        if ( (int)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]) != (T)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]) ) { // possible float?
+          Serial.print(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j],7); Serial.print("\t");
+        }
+        else {
+          Serial.print(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]); Serial.print("\t");
+        }
+      } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][1])); Serial.println(" entries.)");
+    }
     return _available;
   }
+
+
+  if ( !size() ) {
+    Serial.println("There are no queues available..."); return 0;
+  }
+  Serial.print("\nCircular Ring Buffer Queue Size: "); Serial.print(size()); Serial.print(" / "); Serial.println(_size);
+
+  Serial.print("\nIndice:  \t"); 
+
+  for ( uint16_t i = 0; i < _available; i++ ) {
+    Serial.print("[");
+    Serial.print((head+i)&(_size-1)); Serial.print("]      \t");
+  }
+
+  Serial.print("\nEntries:\t");
+
+  for ( uint16_t i = 0; i < _available; i++ ) {
+    if ( (int)_cbuf[(head+i)&(_size-1)] != (T)_cbuf[(head+i)&(_size-1)] ) { // possible float?
+      Serial.print(_cbuf[(head+i)&(_size-1)],7); Serial.print("\t");
+    }
+    else {
+      Serial.print(_cbuf[(head+i)&(_size-1)]); Serial.print("\t\t");
+    }
+  } Serial.println('\n');
+
+
+
+
+  return _available;
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::read() {
   if ( multi ) {
     if ( init_ca ) _init();
-    if ( tail == (head ^ _size) ) tail = (size() - 1)&(2*_size-1);
     head = (head + 1)&(2*_size-1);
     if ( _available ) _available--;
     return 0;
@@ -362,7 +415,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    memmove(&buffer[0],&_cabuf[_cbuf[(head)&(_size-1)]][2],length*sizeof(T)); // update CA buffer
+    memmove(&buffer[0],&_cabuf[(int)_cbuf[(head)&(_size-1)]][2],length*sizeof(T)); // update CA buffer
     read();
     return 0;
   }
@@ -389,3 +442,4 @@ T Circular_Buffer<T,_size,multi>::pop_back(T *buffer, uint16_t length) {
 }
 
 #endif // Circular_Buffer_H
+
