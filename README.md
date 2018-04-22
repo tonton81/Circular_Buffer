@@ -54,6 +54,7 @@ Methods for circular ring buffer
             void clear() { head = tail = _available = 0; }
             uint16_t size() { return _available; }
             uint16_t available() { return _available; }
+            T list();
 
 Methods for circular array buffer
 =================================
