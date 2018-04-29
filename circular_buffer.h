@@ -68,6 +68,7 @@ class Circular_Buffer {
         T variance();
         T deviation();
         T average();
+        bool remove(uint16_t pos);
         T median(bool override = 0);
         void sort_ascending();
         void sort_descending();
@@ -86,12 +87,59 @@ class Circular_Buffer {
 
     protected:
     private:
-        volatile uint16_t head = 0, tail = 0, _available = 0;
+        volatile uint16_t head = 0;
+        volatile uint16_t tail = 0;
+        volatile uint16_t _available = 0;
+
         bool init_ca = 1;
         T _cbuf[_size];
         T _cabuf[_size][multi+2];
         void _init();
 };
+
+template<typename T, uint16_t _size, uint16_t multi>
+bool Circular_Buffer<T,_size,multi>::remove(uint16_t pos) {
+  if ( multi ) {
+    if ( pos >= _size ) return 0;
+
+    int32_t find_area = -1;
+
+    for ( uint16_t i = 0; i < _size; i++ ) {
+      if ( ((head+i)&(_size-1)) == pos ) {
+        find_area = i;
+        break;
+      }
+    }
+    if ( find_area == -1 ) return 0;
+
+    while ( ((head+find_area)&(_size-1)) != ((head)&(_size-1)) ) {
+      memmove(_cabuf[_cbuf[((head+find_area)&(_size-1))]],_cabuf[_cbuf[((head+find_area-1)&(_size-1))]],((int)((int)_cabuf[(int)_cbuf[(head+find_area-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+find_area-1)&(_size-1)]][1])+3);
+      find_area--;
+    }
+
+    head = ((head + 1)&(2*_size-1));
+    _available--;
+    return 1;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 template<typename T, uint16_t _size, uint16_t multi>
 T* Circular_Buffer<T, _size, multi>::find(int pos1, int pos2, int pos3, int pos4, int pos5) {
@@ -107,23 +155,23 @@ bool Circular_Buffer<T, _size, multi>::replace(T *buffer, uint16_t length, int p
   for ( uint16_t j = 0; j < _available; j++ ) {
     switch ( input_count ) {
       case 3: {
-          if ( _cabuf[j][pos1+2] == buffer[pos1] && _cabuf[j][pos2+2] == buffer[pos2] &&
-               _cabuf[j][pos3+2] == buffer[pos3] ) {
+          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] ) {
             found = 1; 
             break;
           }
         }
       case 4: {
-          if ( _cabuf[j][pos1+2] == buffer[pos1] && _cabuf[j][pos2+2] == buffer[pos2] &&
-               _cabuf[j][pos3+2] == buffer[pos3] && _cabuf[j][pos4+2] == buffer[pos4] ) {
+          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] && _cabuf[ (head+j)&(_size-1) ][pos4+2] == buffer[pos4] ) {
             found = 1;
             break;
           }
         }
       case 5: {
-          if ( _cabuf[j][pos1+2] == buffer[pos1] && _cabuf[j][pos2+2] == buffer[pos2] &&
-               _cabuf[j][pos3+2] == buffer[pos3] && _cabuf[j][pos4+2] == buffer[pos4] &&
-               _cabuf[j][pos5+2] == buffer[pos5] ) {
+          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] && _cabuf[ (head+j)&(_size-1) ][pos4+2] == buffer[pos4] &&
+               _cabuf[ (head+j)&(_size-1) ][pos5+2] == buffer[pos5] ) {
             found = 1;
             break;
           }
@@ -442,4 +490,3 @@ T Circular_Buffer<T,_size,multi>::pop_back(T *buffer, uint16_t length) {
 }
 
 #endif // Circular_Buffer_H
-
