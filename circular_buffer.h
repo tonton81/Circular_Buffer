@@ -62,8 +62,8 @@ class Circular_Buffer {
         uint16_t size() { return _available; }
         uint16_t available() { return _available; }
         T capacity() { return _size; }
-        uint16_t length_back() { return ((uint16_t)(_cabuf[_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | _cabuf[_cbuf[(head+size()-1)&(_size-1)]][1]); }
-        uint16_t length_front() { return ((uint16_t)_cabuf[_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T) | _cabuf[_cbuf[(head)&(_size-1)]][1]); }
+        uint16_t length_back() { return (((int)_cabuf[((head+size()-1)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+size()-1)&(_size-1))][1]); }
+        uint16_t length_front() { return (((int)_cabuf[((head)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head)&(_size-1))][1]); }
         T list();
         T variance();
         T deviation();
@@ -80,8 +80,8 @@ class Circular_Buffer {
         T pop_back(T *buffer, uint16_t length);
         T* peek_front() { return front(); } 
         T* peek_back() { return back(); } 
-        T* front() { return _cabuf[_cbuf[(head)&(_size-1)]]+2; }
-        T* back() { return _cabuf[(tail-1)&(_size-1)]+2; }
+        T* front() { return _cabuf[((head)&(_size-1))]+2; }
+        T* back() { return _cabuf[((tail-1)&(_size-1))]+2; }
         bool replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
         T* find(int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
 
@@ -113,10 +113,9 @@ bool Circular_Buffer<T,_size,multi>::remove(uint16_t pos) {
     if ( find_area == -1 ) return 0;
 
     while ( ((head+find_area)&(_size-1)) != ((head)&(_size-1)) ) {
-      memmove(_cabuf[_cbuf[((head+find_area)&(_size-1))]],_cabuf[_cbuf[((head+find_area-1)&(_size-1))]],((int)((int)_cabuf[(int)_cbuf[(head+find_area-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+find_area-1)&(_size-1)]][1])+3);
+      memmove(_cabuf[((head+find_area)&(_size-1))],_cabuf[((head+find_area-1)&(_size-1))],(((int)_cabuf[((head+find_area-1)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+find_area-1)&(_size-1))][1])+3*sizeof(T));
       find_area--;
     }
-
     head = ((head + 1)&(2*_size-1));
     _available--;
     return 1;
@@ -155,32 +154,32 @@ bool Circular_Buffer<T, _size, multi>::replace(T *buffer, uint16_t length, int p
   for ( uint16_t j = 0; j < _available; j++ ) {
     switch ( input_count ) {
       case 3: {
-          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
-               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] ) {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] ) {
             found = 1; 
             break;
           }
         }
       case 4: {
-          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
-               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] && _cabuf[ (head+j)&(_size-1) ][pos4+2] == buffer[pos4] ) {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] && _cabuf[ ((head+j)&(_size-1)) ][pos4+2] == buffer[pos4] ) {
             found = 1;
             break;
           }
         }
       case 5: {
-          if ( _cabuf[ (head+j)&(_size-1) ][pos1+2] == buffer[pos1] && _cabuf[ (head+j)&(_size-1) ][pos2+2] == buffer[pos2] &&
-               _cabuf[ (head+j)&(_size-1) ][pos3+2] == buffer[pos3] && _cabuf[ (head+j)&(_size-1) ][pos4+2] == buffer[pos4] &&
-               _cabuf[ (head+j)&(_size-1) ][pos5+2] == buffer[pos5] ) {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] && _cabuf[ ((head+j)&(_size-1)) ][pos4+2] == buffer[pos4] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos5+2] == buffer[pos5] ) {
             found = 1;
             break;
           }
         }
     }
     if ( found ) {
-      _cabuf[j][0] = ((uint8_t)(length >> 8*sizeof(T)));
-      _cabuf[j][1] = length;
-      memmove(_cabuf[j]+2,buffer,length*sizeof(T));
+      _cabuf[ ((head+j)&(_size-1)) ][0] = ((uint8_t)(length >> 8*sizeof(T)));
+      _cabuf[ ((head+j)&(_size-1)) ][1] = length;
+      memmove(_cabuf[ ((head+j)&(_size-1)) ]+2,buffer,length*sizeof(T));
       break;
     }
   }
@@ -210,11 +209,11 @@ template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::push_front(const T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    if ( tail == (head ^ _size) ) tail = (tail - 1)&(2*_size-1);
-    head = (head - 1)&(2*_size-1);
-    _cabuf[_cbuf[head&(_size-1)]][0] = length >> 8*sizeof(T);
-    _cabuf[_cbuf[head&(_size-1)]][1] = length;
-    memmove(_cabuf[_cbuf[(head)&(_size-1)]]+2,buffer,length*sizeof(T));
+    if ( tail == (head ^ _size) ) tail = ((tail - 1)&(2*_size-1));
+    head = ((head - 1)&(2*_size-1));
+    _cabuf[(head&(_size-1))][0] = length >> 8*sizeof(T);
+    _cabuf[(head&(_size-1))][1] = length;
+    memmove(_cabuf[((head)&(_size-1))]+2,buffer,length*sizeof(T));
     if ( _available < _size ) _available++;
     return;
   }
@@ -226,8 +225,8 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::pop_back() {
   if ( _available ) {
     if ( _available ) _available--;
-    tail = (tail - 1)&(2*_size-1);
-    return _cbuf[tail&(_size-1)];
+    tail = ((tail - 1)&(2*_size-1));
+    return _cbuf[((tail)&(_size-1))];
   }
   return -1;
 }
@@ -235,8 +234,8 @@ T Circular_Buffer<T,_size,multi>::pop_back() {
 template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::push_front(T value) {
   if ( multi ) return;
-  head = (head - 1)&(2*_size-1);
-  _cbuf[head&(_size-1)] = value;
+  head = ((head - 1)&(2*_size-1));
+  _cbuf[((head)&(_size-1))] = value;
   if ( _available < _size ) _available++;
 }
 
@@ -244,18 +243,18 @@ template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::write(const T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    _cabuf[(int)_cbuf[tail&(_size-1)]][0] = length >> 8*sizeof(T);
-    _cabuf[(int)_cbuf[tail&(_size-1)]][1] = length;
-    memmove(_cabuf[(int)_cbuf[tail&(_size-1)]]+2,buffer,length*sizeof(T));
-    if ( tail == (head ^ _size) ) head = (head + 1)&(2*_size-1);
-    tail = (tail + 1)&(2*_size-1);
+    _cabuf[((tail)&(_size-1))][0] = length >> 8*sizeof(T);
+    _cabuf[((tail)&(_size-1))][1] = length;
+    memmove(_cabuf[((tail)&(_size-1))]+2,buffer,length*sizeof(T));
+    if ( tail == ((head ^ _size)) ) head = ((head + 1)&(2*_size-1));
+    tail = ((tail + 1)&(2*_size-1));
     if ( _available < _size ) _available++;
     return;
   }
   if ( ( _available += length ) >= _size ) _available = _size;
   if ( length < ( _size - tail ) ) {
     memmove(_cbuf+tail,buffer,length*sizeof(T));
-    tail = (tail + length)&(2*_size-1);
+    tail = ((tail + length)&(2*_size-1));
   }
   else for ( uint16_t i = 0; i < length; i++ ) write(buffer[i]);
 }
@@ -264,9 +263,9 @@ template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::write(T value) {
   if ( multi ) return;
   if ( _available < _size ) _available++;
-  _cbuf[tail&(_size-1)] = value;
-  if ( tail == (head ^ _size) ) head = (head + 1)&(2*_size-1);
-  tail = (tail + 1)&(2*_size-1);
+  _cbuf[((tail)&(_size-1))] = value;
+  if ( tail == ((head ^ _size)) ) head = ((head + 1)&(2*_size-1));
+  tail = ((tail + 1)&(2*_size-1));
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
@@ -280,36 +279,36 @@ T Circular_Buffer<T,_size,multi>::list() {
     Serial.print("\nCircular Array Buffer Queue Size: "); Serial.print(size()); Serial.print(" / "); Serial.println(_size);
 
     Serial.print("\nFirst Entry: ");
-    for ( uint16_t i = 2; i <= (((int)_cabuf[(int)_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head)&(_size-1)]][1])+1; i++ ) {
-      if ( (int)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][i]) != (T)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][i]) ) { // possible float?
-        Serial.print(_cabuf[(int)_cbuf[(head)&(_size-1)]][i],7);
+    for ( uint16_t i = 2; i <= (((int)_cabuf[((head)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head)&(_size-1))][1])+1; i++ ) {
+      if ( (int)(_cabuf[((head+i)&(_size-1))][i]) != (T)(_cabuf[((head+i)&(_size-1))][i]) ) { // possible float?
+        Serial.print(_cabuf[((head)&(_size-1))][i],7);
       }
-      else Serial.print(_cabuf[(int)_cbuf[(head)&(_size-1)]][i]);
+      else Serial.print(_cabuf[((head)&(_size-1))][i]);
       Serial.print("    ");
-    } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head)&(_size-1)]][1])); Serial.println(" entries.)");
+    } Serial.print("("); Serial.print((((int)_cabuf[((head)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head)&(_size-1))][1])); Serial.println(" entries.)");
 
     Serial.print("Last Entry:  ");
-    for ( uint16_t i = 2; i <= ((int)((int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][1])+1; i++ ) {
-      if ( (int)(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]) != (T)(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]) ) { // possible float?
-        Serial.print(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i],7);
+    for ( uint16_t i = 2; i <= (((int)_cabuf[((head+size()-1)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+size()-1)&(_size-1))][1])+1; i++ ) {
+      if ( (int)(_cabuf[((head+size()-1)&(_size-1))][i]) != (T)(_cabuf[((head+size()-1)&(_size-1))][i]) ) { // possible float?
+        Serial.print(_cabuf[((head+size()-1)&(_size-1))][i],7);
       }
-      else Serial.print(_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][i]);
+      else Serial.print(_cabuf[((head+size()-1)&(_size-1))][i]);
       Serial.print("    ");
-    } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+size()-1)&(_size-1)]][1])); Serial.println(" entries.)");
+    } Serial.print("("); Serial.print((((int)_cabuf[((head+size()-1)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+size()-1)&(_size-1))][1])); Serial.println(" entries.)");
 
     Serial.print("\n[Indice]      [Entries]\n\n"); 
     for ( uint16_t i = 0; i < size(); i++ ) {
       Serial.print("    ");
-      Serial.print((head+i)&(_size-1));
+      Serial.print(((head+i)&(_size-1)));
       Serial.print("\t\t");
-      for ( uint16_t j = 2; j <= ((int)((int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][1])+1; j++ ) {
-        if ( (int)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]) != (T)(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]) ) { // possible float?
-          Serial.print(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j],7); Serial.print("\t");
+      for ( uint16_t j = 2; j <= (((int)_cabuf[((head+i)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+i)&(_size-1))][1])+1; j++ ) {
+        if ( (int)(_cabuf[((head+i)&(_size-1))][j]) != (T)(_cabuf[((head+i)&(_size-1))][j]) ) { // possible float?
+          Serial.print(_cabuf[((head+i)&(_size-1))][j],7); Serial.print("\t");
         }
         else {
-          Serial.print(_cabuf[(int)_cbuf[(head+i)&(_size-1)]][j]); Serial.print("\t");
+          Serial.print(_cabuf[((head+i)&(_size-1))][j]); Serial.print("\t");
         }
-      } Serial.print("("); Serial.print(((int)((int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][0] << 8*sizeof(T)) | (int)_cabuf[(int)_cbuf[(head+i)&(_size-1)]][1])); Serial.println(" entries.)");
+      } Serial.print("("); Serial.print((((int)_cabuf[((head+i)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+i)&(_size-1))][1])); Serial.println(" entries.)");
     }
     return _available;
   }
@@ -330,11 +329,11 @@ T Circular_Buffer<T,_size,multi>::list() {
   Serial.print("\nEntries:\t");
 
   for ( uint16_t i = 0; i < _available; i++ ) {
-    if ( (int)_cbuf[(head+i)&(_size-1)] != (T)_cbuf[(head+i)&(_size-1)] ) { // possible float?
-      Serial.print(_cbuf[(head+i)&(_size-1)],7); Serial.print("\t");
+    if ( (int)_cbuf[((head+i)&(_size-1))] != (T)_cbuf[((head+i)&(_size-1))] ) { // possible float?
+      Serial.print(_cbuf[((head+i)&(_size-1))],7); Serial.print("\t");
     }
     else {
-      Serial.print(_cbuf[(head+i)&(_size-1)]); Serial.print("\t\t");
+      Serial.print(_cbuf[((head+i)&(_size-1))]); Serial.print("\t\t");
     }
   } Serial.println('\n');
 
@@ -348,13 +347,13 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::read() {
   if ( multi ) {
     if ( init_ca ) _init();
-    head = (head + 1)&(2*_size-1);
+    head = ((head + 1)&(2*_size-1));
     if ( _available ) _available--;
     return 0;
   }
   if ( _available ) _available--;
-  T value = _cbuf[head&(_size-1)];
-  head = (head + 1)&(2*_size-1);
+  T value = _cbuf[((head)&(_size-1))];
+  head = ((head + 1)&(2*_size-1));
   return value;
 }
 
@@ -362,7 +361,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::sum() {
   if ( multi || !_available ) return 0;
   T value = 0;
-  for ( uint16_t i = 0; i < _available; i++ ) value += _cbuf[(head+i)&(_size-1)];
+  for ( uint16_t i = 0; i < _available; i++ ) value += _cbuf[((head+i)&(_size-1))];
   return value;
 }
 
@@ -378,7 +377,7 @@ T Circular_Buffer<T,_size,multi>::variance() {
   T _mean = average();
   T value = 0;
   for ( uint16_t i = 0; i < _available; i++ ) {
-    value += ((_cbuf[(head+i)&(_size-1)] - _mean) * (_cbuf[(head+i)&(_size-1)] - _mean));
+    value += ((_cbuf[((head+i)&(_size-1))] - _mean) * (_cbuf[((head+i)&(_size-1))] - _mean));
   }
   value /= _available;
   return value;
@@ -394,16 +393,16 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peek(uint16_t pos) {
   if ( multi ) return 0;
   if ( pos > _size ) return 0;
-  return _cbuf[(head+pos)&(_size-1)];
+  return _cbuf[((head+pos)&(_size-1))];
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::sort_ascending() {
   if ( multi || !_available ) return;
   T buffer[_available];
-  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[((head+i)&(_size-1))];
   std::sort(&buffer[0], &buffer[_available]); // sort ascending
-  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[(head+i)&(_size-1)] = buffer[i];
+  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[((head+i)&(_size-1))] = buffer[i];
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
@@ -411,9 +410,9 @@ void Circular_Buffer<T,_size,multi>::sort_descending() {
   if ( multi || !_available ) return;
   sort_ascending();
   T buffer[_available];
-  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[((head+i)&(_size-1))];
   std::reverse(&buffer[0], &buffer[_available]); // sort descending
-  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[(head+i)&(_size-1)] = buffer[i];
+  for ( uint16_t i = 0; i < _available; i++ ) _cbuf[((head+i)&(_size-1))] = buffer[i];
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
@@ -422,13 +421,13 @@ T Circular_Buffer<T,_size,multi>::median(bool override) {
   if ( override ) sort_ascending();
   else {
     T buffer[_available];
-    for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+    for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[((head+i)&(_size-1))];
     std::sort(&buffer[0], &buffer[_available]); // sort ascending
   }
   if ( !(_available % 2) ) {
-    return ( _cbuf[(head+((_available/2)-1))&(_size-1)]  +  _cbuf[(head+(_available/2))&(_size-1)] ) /2;
+    return ( _cbuf[((head+((_available/2)-1))&(_size-1))]  +  _cbuf[((head+(_available/2))&(_size-1))] ) /2;
   }
-  else return _cbuf[(head+((_available/2)))&(_size-1)];  
+  else return _cbuf[((head+((_available/2)))&(_size-1))];  
   return 0;
 }
 
@@ -436,7 +435,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::max() {
   if ( multi || !_available ) return 0;
   T buffer[_available];
-  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[((head+i)&(_size-1))];
   std::sort(&buffer[0], &buffer[_available]); // sort ascending
   return buffer[_available-1];
 }
@@ -444,7 +443,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::min() {
   if ( multi || !_available ) return 0;
   T buffer[_available];
-  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[(head+i)&(_size-1)];
+  for ( uint16_t i = 0; i < _available; i++ ) buffer[i] = _cbuf[((head+i)&(_size-1))];
   std::sort(&buffer[0], &buffer[_available]); // sort ascending
   return buffer[0];
 }
@@ -463,7 +462,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    memmove(&buffer[0],&_cabuf[(int)_cbuf[(head)&(_size-1)]][2],length*sizeof(T)); // update CA buffer
+    memmove(&buffer[0],&_cabuf[((head)&(_size-1))][2],length*sizeof(T)); // update CA buffer
     read();
     return 0;
   }
@@ -472,7 +471,7 @@ T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
   if ( _count < ( _size - head ) ) {
     _available -= length;
     memmove(buffer,_cbuf,_count*sizeof(T));
-    head = (head + _count)&(2*_size-1);
+    head = ((head + _count)&(2*_size-1));
   }
   else for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = read(); // if buffer rollover
   return _count;
@@ -482,7 +481,7 @@ template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::pop_back(T *buffer, uint16_t length) {
   if ( multi ) {
     if ( init_ca ) _init();
-    memmove(&buffer[0],&_cabuf[(tail-1)&(_size-1)][2],length*sizeof(T));
+    memmove(&buffer[0],&_cabuf[((tail-1)&(_size-1))][2],length*sizeof(T));
     tail = (tail - 1)&(2*_size-1);
     if ( _available ) _available--;
     return 0;
@@ -490,3 +489,4 @@ T Circular_Buffer<T,_size,multi>::pop_back(T *buffer, uint16_t length) {
 }
 
 #endif // Circular_Buffer_H
+
