@@ -80,6 +80,8 @@ Methods for circular array buffer
             T pop_front(T *buffer, uint16_t length) { return readBytes(buffer,length); }
             T read();
             T read(T *buffer, uint16_t length) { return readBytes(buffer,length); }
+            T peek_front(T *buffer, uint16_t length);
+            bool isEqual(const T *buffer);
             T readBytes(T *buffer, uint16_t length);
             void write(const T *buffer, uint16_t length);
 
@@ -129,6 +131,8 @@ few methods but run differently depending on which buffer calls it.
             T* peek_back() { return back(); }  // look through the items of the back queued circular array
             T* front() { return _cabuf[_cbuf[(head)&(_size-1)]]+2; } // look through the items of the front queued circular array
             T* back() { return _cabuf[(tail-1)&(_size-1)]+2; } // look through the items of the back queued circular array
+            T peek_front(T *buffer, uint16_t length); // peek front buffer into array but don't dequeue. use read() to drop queue item.
+            bool isEqual(const T *buffer); // returns 1 if an array passed in matches one exactly in queue
             bool replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1); // This replaces an array if 3-5 patterns match
 
 
