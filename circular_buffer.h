@@ -214,8 +214,8 @@ bool Circular_Buffer<T, _size, multi>::replace(T *buffer, uint16_t length, int p
         }
     }
     if ( found ) {
-      _cabuf[ ((head+j)&(_size-1)) ][0] = ((uint8_t)(length >> 8*sizeof(T)));
-      _cabuf[ ((head+j)&(_size-1)) ][1] = length;
+      _cabuf[ ((head+j)&(_size-1)) ][0] = length & 0xFF00;
+      _cabuf[ ((head+j)&(_size-1)) ][1] = length & 0xFF;
       memmove(_cabuf[ ((head+j)&(_size-1)) ]+2,buffer,length*sizeof(T));
       break;
     }
@@ -270,8 +270,8 @@ void Circular_Buffer<T,_size,multi>::push_front(const T *buffer, uint16_t length
   if ( multi ) {
     if ( tail == (head ^ _size) ) tail = ((tail - 1)&(2*_size-1));
     head = ((head - 1)&(2*_size-1));
-    _cabuf[(head&(_size-1))][0] = length >> 8*sizeof(T);
-    _cabuf[(head&(_size-1))][1] = length;
+    _cabuf[(head&(_size-1))][0] = length & 0xFF00;
+    _cabuf[(head&(_size-1))][1] = length & 0xFF;
     memmove(_cabuf[((head)&(_size-1))]+2,buffer,length*sizeof(T));
     if ( _available < _size ) _available++;
     return;
@@ -301,8 +301,8 @@ void Circular_Buffer<T,_size,multi>::push_front(T value) {
 template<typename T, uint16_t _size, uint16_t multi>
 void Circular_Buffer<T,_size,multi>::write(const T *buffer, uint16_t length) {
   if ( multi ) {
-    _cabuf[((tail)&(_size-1))][0] = length >> 8*sizeof(T);
-    _cabuf[((tail)&(_size-1))][1] = length;
+    _cabuf[((tail)&(_size-1))][0] = length & 0xFF00;
+    _cabuf[((tail)&(_size-1))][1] = length & 0xFF;
     memmove(_cabuf[((tail)&(_size-1))]+2,buffer,length*sizeof(T));
     if ( tail == ((head ^ _size)) ) head = ((head + 1)&(2*_size-1));
     tail = ((tail + 1)&(2*_size-1));
