@@ -86,6 +86,7 @@ class Circular_Buffer {
         bool replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
         bool isEqual(const T *buffer);
         bool find(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
+        bool findRemove(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
 
     protected:
     private:
@@ -127,6 +128,44 @@ bool Circular_Buffer<T,_size,multi>::remove(uint16_t pos) {
 
 
 
+template<typename T, uint16_t _size, uint16_t multi>
+bool Circular_Buffer<T, _size, multi>::findRemove(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4, int pos5) {
+  uint8_t input_count = 3;
+  int32_t found = -1;
+  if ( pos4 != -1 ) input_count = 4;
+  if ( pos5 != -1 ) input_count = 5;
+  for ( uint16_t j = 0; j < _available; j++ ) {
+    switch ( input_count ) {
+      case 3: {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] ) {
+            found = j; 
+            break;
+          }
+        }
+      case 4: {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] && _cabuf[ ((head+j)&(_size-1)) ][pos4+2] == buffer[pos4] ) {
+            found = j;
+            break;
+          }
+        }
+      case 5: {
+          if ( _cabuf[ ((head+j)&(_size-1)) ][pos1+2] == buffer[pos1] && _cabuf[ ((head+j)&(_size-1)) ][pos2+2] == buffer[pos2] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos3+2] == buffer[pos3] && _cabuf[ ((head+j)&(_size-1)) ][pos4+2] == buffer[pos4] &&
+               _cabuf[ ((head+j)&(_size-1)) ][pos5+2] == buffer[pos5] ) {
+            found = j;
+            break;
+          }
+        }
+    }
+    if ( found >= 0 ) {
+      remove(found);
+      return 1;
+    }
+  }
+  return 0;
+}
 
 
 
