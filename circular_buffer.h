@@ -114,7 +114,7 @@ bool Circular_Buffer<T,_size,multi>::remove(uint16_t pos) {
     if ( find_area == -1 ) return 0;
 
     while ( ((head+find_area)&(_size-1)) != ((head)&(_size-1)) ) {
-      memmove(_cabuf[((head+find_area)&(_size-1))],_cabuf[((head+find_area-1)&(_size-1))],(((int)_cabuf[((head+find_area-1)&(_size-1))][0] << 8*sizeof(T)) | (int)_cabuf[((head+find_area-1)&(_size-1))][1])+3*sizeof(T));
+      memmove(_cabuf[((head+find_area)&(_size-1))],_cabuf[((head+find_area-1)&(_size-1))], (2+multi)*sizeof(T));
       find_area--;
     }
     head = ((head + 1)&(2*_size-1));
