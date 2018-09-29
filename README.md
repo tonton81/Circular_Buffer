@@ -85,6 +85,7 @@ Methods for circular array buffer
             T readBytes(T *buffer, uint16_t length);
             void write(const T *buffer, uint16_t length);
             bool find(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
+            bool findRemove(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
             bool isEqual(const T *buffer);
 
 ### Method explanations
@@ -137,6 +138,7 @@ few methods but run differently depending on which buffer calls it.
             bool isEqual(const T *buffer); // returns 1 if an array passed in matches one exactly in queue
             bool replace(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1); // This replaces an array if 3-5 patterns match
             bool find(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1); // finds an entry in queue and memmoves it to the user buffer. The usage of the method is same as the ::replace(...) method
+            bool findRemove(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1); // like find and replace, this will removed a found entry from the queue.
 
 
 The replace function is special. It searches all your "available" queues and replaces the entry thats found for a match.
