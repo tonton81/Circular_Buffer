@@ -439,19 +439,6 @@ T Circular_Buffer<T,_size,multi>::list() {
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
-T Circular_Buffer<T,_size,multi>::read() {
-  if ( multi ) {
-    head = ((head + 1)&(2*_size-1));
-    if ( _available ) _available--;
-    return 0;
-  }
-  if ( _available ) _available--;
-  T value = _cbuf[((head)&(_size-1))];
-  head = ((head + 1)&(2*_size-1));
-  return value;
-}
-
-template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::sum() {
   if ( multi || !_available ) return 0;
   T value = 0;
@@ -552,7 +539,6 @@ T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
   return _count;
 }
 
-
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peek_front(T *buffer, uint16_t length, uint32_t entry) {
   if ( multi ) {
@@ -568,15 +554,22 @@ T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
     read();
     return 0;
   }
-  uint16_t _count;
-  ( _available < length ) ? _count = _available : _count = length; // memmove if aligned
-  if ( _count < ( _size - head ) ) {
-    _available -= length;
-    memmove(buffer,_cbuf,_count*sizeof(T));
-    head = ((head + _count)&(2*_size-1));
-  }
-  else for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = read(); // if buffer rollover
+  uint16_t _count = ( _available < length ) ? _available : length;
+  for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = read(); // if buffer rollover
   return _count;
+}
+
+template<typename T, uint16_t _size, uint16_t multi>
+T Circular_Buffer<T,_size,multi>::read() {
+  if ( multi ) {
+    head = ((head + 1)&(2*_size-1));
+    if ( _available ) _available--;
+    return 0;
+  }
+  if ( _available ) _available--;
+  T value = _cbuf[((head)&(_size-1))];
+  head = ((head + 1)&(2*_size-1));
+  return value;
 }
 
 template<typename T, uint16_t _size, uint16_t multi>
