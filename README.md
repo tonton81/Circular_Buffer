@@ -166,7 +166,7 @@ When you create a circular array buffer, of lets say, 200 per array in size, the
 This is because the 2 first entries of the array internally are used when you buffer write the length of the array to queue.
 The length is stored in the first 2 positions of the raw array space. Why 2? When dealing with char or uint8_t or other 8 bit buffers, going beyond 255 byte array indexing wont be possible...
 
-The library supports many types, ones that have been tested are floats, uint8_t, uint16_t, and uint32_t.
+The library supports many types, ones that have been tested are floats, uint8_t, uint16_t, uint32_t, and uint64_t.
 
 ## Construction
 
