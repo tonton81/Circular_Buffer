@@ -532,9 +532,8 @@ T Circular_Buffer<T,_size,multi>::min() {
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::peekBytes(T *buffer, uint16_t length) {
   if ( multi ) return 0;
-  uint16_t _count;
-  ( _available < length ) ? _count = _available : _count = length;
-  if ( _count < ( _size - head ) ) memmove(buffer,_cbuf,_count*sizeof(T));
+  uint16_t _count = ( _available < length ) ? _available : length;
+  if ( _count < ( _size - head ) ) memmove(buffer,_cbuf+head,_count*sizeof(T));
   else for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = peek(i);
   return _count;
 }
@@ -555,7 +554,8 @@ T Circular_Buffer<T,_size,multi>::readBytes(T *buffer, uint16_t length) {
     return 0;
   }
   uint16_t _count = ( _available < length ) ? _available : length;
-  for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = read(); // if buffer rollover
+  if ( _count < ( _size - head ) ) memmove(buffer,_cbuf+head,_count*sizeof(T));
+  else for ( uint16_t i = 0; i < _count; i++ ) buffer[i] = read(); // if buffer rollover
   return _count;
 }
 
