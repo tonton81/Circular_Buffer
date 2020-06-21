@@ -88,7 +88,6 @@ class Circular_Buffer {
         bool find(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
         bool findRemove(T *buffer, uint16_t length, int pos1, int pos2, int pos3, int pos4 = -1, int pos5 = -1);
         T operator[](uint32_t idx);
-        //T operator[][](uint32_t idx1, uint32_t idx2){;}
 
     protected:
     private:
@@ -104,8 +103,7 @@ class Circular_Buffer {
 template<typename T, uint16_t _size, uint16_t multi>
 T Circular_Buffer<T,_size,multi>::operator[](uint32_t idx) {
   if ( multi ) {
-
-    return 3;
+    return 0;
   }
   return _cbuf[((head+idx)&(_size-1))];
 }
